@@ -41,13 +41,21 @@ export default function AdminLogin() {
     setErrors({}); // Clear previous errors
 
     try {
-      // Simulate network delay for better UX
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Simple authentication for workshop - in production use proper auth
-      if (formData.username === "admin" && formData.password === "admin123") {
+      // Call API untuk login
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
         // Set session (in production use proper session management)
         localStorage.setItem("adminLoggedIn", "true");
+        localStorage.setItem("adminData", JSON.stringify(data.admin));
         console.log("Login successful, localStorage set"); // Debug log
         
         // Show success message
@@ -58,12 +66,12 @@ export default function AdminLogin() {
           router.push("/admin");
         }, 1000);
       } else {
-        setErrors({ submit: "Username atau password salah" });
+        setErrors({ submit: data.error || "Username atau password salah" });
         setIsSubmitting(false); // Reset loading state on error
       }
     } catch (error) {
       console.error("Login error:", error);
-      setErrors({ submit: "Terjadi kesalahan" });
+      setErrors({ submit: "Terjadi kesalahan koneksi" });
       setIsSubmitting(false); // Reset loading state on error
     }
   };

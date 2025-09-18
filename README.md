@@ -1,6 +1,6 @@
 # Layanan Publik Mobile
 
-Sistem Layanan Publik Mobile Responsive dengan fitur pengajuan layanan, tracking status, dan notifikasi WhatsApp/Email.
+Sistem Layanan Publik IMB Bogor Mobile Responsive dengan fitur pengajuan layanan, tracking status, dan notifikasi WhatsApp/Email.
 
 ## 🚀 Fitur
 

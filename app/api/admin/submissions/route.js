@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { Submission, initializeDatabase } from "@/lib/sequelize";
+import { Submission, sequelize } from "@/lib/sequelize";
 
 // Initialize database on first request
 let dbInitialized = false;
 const initDB = async () => {
   if (!dbInitialized) {
-    await initializeDatabase();
+    await sequelize.authenticate();
+    await sequelize.sync();
     dbInitialized = true;
   }
 };

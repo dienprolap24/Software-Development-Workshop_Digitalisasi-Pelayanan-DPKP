@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import {
   Submission,
   NotificationLog,
-  initializeDatabase,
+  sequelize,
 } from "@/lib/sequelize";
 import { sendStatusUpdateNotification } from "@/lib/notify/sicuba";
 import { sendStatusUpdateEmail } from "@/lib/notify/email";
@@ -11,7 +11,8 @@ import { sendStatusUpdateEmail } from "@/lib/notify/email";
 let dbInitialized = false;
 const initDB = async () => {
   if (!dbInitialized) {
-    await initializeDatabase();
+    await sequelize.authenticate();
+    await sequelize.sync();
     dbInitialized = true;
   }
 };

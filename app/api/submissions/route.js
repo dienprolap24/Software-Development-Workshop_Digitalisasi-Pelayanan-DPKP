@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Submission, NotificationLog, initializeDatabase } from "@/lib/sequelize";
+import { Submission, NotificationLog, sequelize } from "@/lib/sequelize";
 import { normalizePhoneNumber } from "@/lib/phone";
 import { sendInitialSubmissionNotification } from "@/lib/notify/sicuba";
 
@@ -7,7 +7,8 @@ import { sendInitialSubmissionNotification } from "@/lib/notify/sicuba";
 let dbInitialized = false;
 const initDB = async () => {
   if (!dbInitialized) {
-    await initializeDatabase();
+    await sequelize.authenticate();
+    await sequelize.sync();
     dbInitialized = true;
   }
 };
