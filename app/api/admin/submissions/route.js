@@ -1,10 +1,67 @@
 import { NextResponse } from "next/server";
-import { Submission, sequelize } from "@/lib/sequelize";
+import { createVercelSequelize } from "@/lib/vercel-db";
+import { DataTypes } from "sequelize";
 
 // Initialize database on first request
 let dbInitialized = false;
+let sequelize = null;
+let Submission = null;
+
 const initDB = async () => {
   if (!dbInitialized) {
+    sequelize = createVercelSequelize(process.env.DATABASE_URL);
+    
+    // Define Submission model
+    Submission = sequelize.define(
+      "Submission",
+      {
+        id: {
+          type: DataTypes.UUID,
+          defaultValue: DataTypes.UUIDV4,
+          primaryKey: true,
+        },
+        tracking_code: {
+          type: DataTypes.STRING,
+          unique: true,
+          allowNull: false,
+        },
+        nama: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        nik: {
+          type: DataTypes.STRING(16),
+          allowNull: false,
+        },
+        email: {
+          type: DataTypes.STRING,
+          allowNull: true,
+          validate: {
+            isEmail: true,
+          },
+        },
+        no_wa: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        jenis_layanan: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        status: {
+          type: DataTypes.ENUM("PENGAJUAN_BARU", "DIPROSES", "SELESAI", "DITOLAK"),
+          defaultValue: "PENGAJUAN_BARU",
+          allowNull: false,
+        },
+      },
+      {
+        tableName: "submissions",
+        timestamps: true,
+        createdAt: "created_at",
+        updatedAt: "updated_at",
+      }
+    );
+
     await sequelize.authenticate();
     await sequelize.sync();
     dbInitialized = true;
