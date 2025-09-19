@@ -1,76 +1,10 @@
 import { NextResponse } from "next/server";
-import { createVercelSequelize } from "@/lib/vercel-db";
-import { DataTypes } from "sequelize";
-
-// Initialize database on first request
-let dbInitialized = false;
-let sequelize = null;
-let Submission = null;
-
-const initDB = async () => {
-  if (!dbInitialized) {
-    sequelize = createVercelSequelize(process.env.DATABASE_URL);
-    
-    // Define Submission model
-    Submission = sequelize.define(
-      "Submission",
-      {
-        id: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
-          primaryKey: true,
-        },
-        tracking_code: {
-          type: DataTypes.STRING,
-          unique: true,
-          allowNull: false,
-        },
-        nama: {
-          type: DataTypes.STRING,
-          allowNull: false,
-        },
-        nik: {
-          type: DataTypes.STRING(16),
-          allowNull: false,
-        },
-        email: {
-          type: DataTypes.STRING,
-          allowNull: true,
-          validate: {
-            isEmail: true,
-          },
-        },
-        no_wa: {
-          type: DataTypes.STRING,
-          allowNull: false,
-        },
-        jenis_layanan: {
-          type: DataTypes.STRING,
-          allowNull: false,
-        },
-        status: {
-          type: DataTypes.ENUM("PENGAJUAN_BARU", "DIPROSES", "SELESAI", "DITOLAK"),
-          defaultValue: "PENGAJUAN_BARU",
-          allowNull: false,
-        },
-      },
-      {
-        tableName: "submissions",
-        timestamps: true,
-        createdAt: "created_at",
-        updatedAt: "updated_at",
-      }
-    );
-
-    await sequelize.authenticate();
-    await sequelize.sync();
-    dbInitialized = true;
-  }
-};
+import { getVercelDatabase } from "@/lib/vercel-init-db";
 
 export async function GET(request) {
   try {
-    await initDB();
+    // Initialize database with all models
+    const { sequelize, Submission } = await getVercelDatabase(process.env.DATABASE_URL);
 
     // In a real application, you would verify admin authentication here
     // For workshop purposes, we'll skip authentication

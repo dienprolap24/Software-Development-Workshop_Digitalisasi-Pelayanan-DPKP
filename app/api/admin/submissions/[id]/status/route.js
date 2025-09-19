@@ -1,117 +1,7 @@
 import { NextResponse } from "next/server";
-import { createVercelSequelize } from "@/lib/vercel-db";
-import { DataTypes } from "sequelize";
+import { getVercelDatabase } from "@/lib/vercel-init-db";
 import { sendStatusUpdateNotification } from "@/lib/notify/sicuba";
 import { sendStatusUpdateEmail } from "@/lib/notify/email";
-
-// Initialize database on first request
-let dbInitialized = false;
-let sequelize = null;
-let Submission = null;
-let NotificationLog = null;
-
-const initDB = async () => {
-  if (!dbInitialized) {
-    sequelize = createVercelSequelize(process.env.DATABASE_URL);
-    
-    // Define Submission model
-    Submission = sequelize.define(
-      "Submission",
-      {
-        id: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
-          primaryKey: true,
-        },
-        tracking_code: {
-          type: DataTypes.STRING,
-          unique: true,
-          allowNull: false,
-        },
-        nama: {
-          type: DataTypes.STRING,
-          allowNull: false,
-        },
-        nik: {
-          type: DataTypes.STRING(16),
-          allowNull: false,
-        },
-        email: {
-          type: DataTypes.STRING,
-          allowNull: true,
-          validate: {
-            isEmail: true,
-          },
-        },
-        no_wa: {
-          type: DataTypes.STRING,
-          allowNull: false,
-        },
-        jenis_layanan: {
-          type: DataTypes.STRING,
-          allowNull: false,
-        },
-        status: {
-          type: DataTypes.ENUM("PENGAJUAN_BARU", "DIPROSES", "SELESAI", "DITOLAK"),
-          defaultValue: "PENGAJUAN_BARU",
-          allowNull: false,
-        },
-      },
-      {
-        tableName: "submissions",
-        timestamps: true,
-        createdAt: "created_at",
-        updatedAt: "updated_at",
-      }
-    );
-
-    // Define NotificationLog model
-    NotificationLog = sequelize.define(
-      "NotificationLog",
-      {
-        id: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
-          primaryKey: true,
-        },
-        submission_id: {
-          type: DataTypes.UUID,
-          allowNull: false,
-          references: {
-            model: "submissions",
-            key: "id",
-          },
-        },
-        channel: {
-          type: DataTypes.ENUM("WHATSAPP", "EMAIL"),
-          allowNull: false,
-        },
-        send_status: {
-          type: DataTypes.ENUM("SUCCESS", "FAILED"),
-          allowNull: false,
-        },
-        payload: {
-          type: DataTypes.JSON,
-          allowNull: false,
-        },
-      },
-      {
-        tableName: "notification_logs",
-        timestamps: true,
-        createdAt: "created_at",
-        updatedAt: false,
-      }
-    );
-
-    // Define relationships
-    Submission.hasMany(NotificationLog, { foreignKey: "submission_id" });
-    NotificationLog.belongsTo(Submission, { foreignKey: "submission_id" });
-
-    await sequelize.authenticate();
-    await sequelize.sync();
-    dbInitialized = true;
-  }
-};
 
 // Handle CORS preflight
 export async function OPTIONS() {
@@ -134,7 +24,8 @@ export async function PATCH(request, { params }) {
   console.log("🔍 Params:", params);
 
   try {
-    await initDB();
+    // Initialize database with all models
+    const { sequelize, Submission, NotificationLog } = await getVercelDatabase(process.env.DATABASE_URL);
 
     const { id } = params;
     const body = await request.json();

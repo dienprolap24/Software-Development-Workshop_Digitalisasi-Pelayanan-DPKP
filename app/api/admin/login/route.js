@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { createVercelSequelize } from "../../../../lib/vercel-db";
-import { DataTypes } from "sequelize";
+import { getVercelDatabase } from "../../../../lib/vercel-init-db";
 
 export async function POST(request) {
   try {
@@ -15,47 +14,8 @@ export async function POST(request) {
       );
     }
 
-    // Create Vercel-optimized Sequelize instance
-    const sequelize = createVercelSequelize(process.env.DATABASE_URL);
-    
-    // Define Admin model
-    const Admin = sequelize.define(
-      "Admin",
-      {
-        id: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
-          primaryKey: true,
-        },
-        username: {
-          type: DataTypes.STRING,
-          allowNull: false,
-          unique: true,
-        },
-        email: {
-          type: DataTypes.STRING,
-          allowNull: false,
-          unique: true,
-          validate: {
-            isEmail: true,
-          },
-        },
-        password: {
-          type: DataTypes.STRING,
-          allowNull: false,
-        },
-      },
-      {
-        tableName: "admins",
-        timestamps: true,
-        createdAt: "created_at",
-        updatedAt: "updated_at",
-      }
-    );
-
-    // Pastikan database terhubung dan model tersinkronisasi
-    await sequelize.authenticate();
-    await sequelize.sync();
+    // Initialize database with all models
+    const { sequelize, Admin } = await getVercelDatabase(process.env.DATABASE_URL);
 
     // Cari admin berdasarkan email (menggunakan field username sebagai email)
     const admin = await Admin.findOne({
